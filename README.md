@@ -52,15 +52,13 @@ Here are the SQL problems that you will solve as part of this project:
 
 ## SQL Queries Solutions
 
-Below are the solutions for each question in this project:
-
 ### Q1: List All Distinct Users and Their Stats
 ```sql
 SELECT
     username,
     COUNT(id) AS total_submissions,
     SUM(points) AS points_earned
-FROM user_submissions
+FROM data
 GROUP BY username
 ORDER BY total_submissions DESC;
 ```
@@ -68,11 +66,11 @@ ORDER BY total_submissions DESC;
 ### Q2: Calculate the Daily Average Points for Each User
 ```sql
 SELECT
-    TO_CHAR(submitted_at, 'DD-MM') AS day,
+    DATE_FORMAT(submitted_at, '%d-%m') AS day,
     username,
     AVG(points) AS daily_avg_points
-FROM user_submissions
-GROUP BY 1, 2
+FROM data
+GROUP BY day, username
 ORDER BY username;
 ```
 
@@ -80,18 +78,18 @@ ORDER BY username;
 ```sql
 WITH daily_submissions AS (
     SELECT
-        TO_CHAR(submitted_at, 'DD-MM') AS daily,
+        DATE_FORMAT(submitted_at, '%d-%m') AS daily,
         username,
         SUM(CASE WHEN points > 0 THEN 1 ELSE 0 END) AS correct_submissions
-    FROM user_submissions
-    GROUP BY 1, 2
+    FROM data
+    GROUP BY daily, username
 ),
 users_rank AS (
     SELECT
         daily,
         username,
         correct_submissions,
-        DENSE_RANK() OVER(PARTITION BY daily ORDER BY correct_submissions DESC) AS rank
+        DENSE_RANK() OVER (PARTITION BY daily ORDER BY correct_submissions DESC) AS rank1
     FROM daily_submissions
 )
 SELECT
@@ -99,37 +97,32 @@ SELECT
     username,
     correct_submissions
 FROM users_rank
-WHERE rank <= 3;
+WHERE rank1 <= 3;
 ```
 
 ### Q4: Find the Top 5 Users with the Highest Number of Incorrect Submissions
 ```sql
 SELECT
     username,
-    SUM(CASE WHEN points < 0 THEN 1 ELSE 0 END) AS incorrect_submissions,
-    SUM(CASE WHEN points > 0 THEN 1 ELSE 0 END) AS correct_submissions,
-    SUM(CASE WHEN points < 0 THEN points ELSE 0 END) AS incorrect_submissions_points,
-    SUM(CASE WHEN points > 0 THEN points ELSE 0 END) AS correct_submissions_points_earned,
-    SUM(points) AS points_earned
-FROM user_submissions
-GROUP BY 1
-ORDER BY incorrect_submissions DESC;
+    SUM(CASE WHEN points < 0 THEN 1 ELSE 0 END) AS incorrect_submissions
+FROM data
+GROUP BY username
+ORDER BY incorrect_submissions DESC
+LIMIT 5;
 ```
 
 ### Q5: Find the Top 10 Performers for Each Week
 ```sql
-SELECT *  
-FROM (
+WITH weekly_performance AS (
     SELECT
-        EXTRACT(WEEK FROM submitted_at) AS week_no,
+        WEEK(submitted_at) AS week_no,
         username,
         SUM(points) AS total_points_earned,
-        DENSE_RANK() OVER(PARTITION BY EXTRACT(WEEK FROM submitted_at) ORDER BY SUM(points) DESC) AS rank
-    FROM user_submissions
-    GROUP BY 1, 2
-    ORDER BY week_no, total_points_earned DESC
+        DENSE_RANK() OVER (PARTITION BY WEEK(submitted_at) ORDER BY SUM(points) DESC) AS rank2
+    FROM data
+    GROUP BY week_no, username
 )
-WHERE rank <= 10;
+SELECT * FROM weekly_performance WHERE rank2 <= 10;
 ```
 
 ### Q6: Find Users Who Improved Their Performance Over Time
@@ -139,7 +132,7 @@ WITH score_trend AS (
         username,
         EXTRACT(MONTH FROM submitted_at) AS month,
         AVG(points) AS avg_points
-    FROM user_submissions
+    FROM data
     GROUP BY username, month
 )
 SELECT DISTINCT s1.username
@@ -147,5 +140,4 @@ FROM score_trend s1
 JOIN score_trend s2 ON s1.username = s2.username AND s1.month < s2.month
 WHERE s2.avg_points > s1.avg_points;
 ```
-
 
