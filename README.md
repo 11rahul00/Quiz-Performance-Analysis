@@ -37,9 +37,6 @@ Here are the SQL problems that you will solve as part of this project:
 - **Description**: Identify the top 10 users with the highest total points earned each week.
 - **Expected Output**: A report showing the top 10 users ranked by total points per week.
 
-### Q6. Find Users Who Improved Their Performance Over Time
-- **Description**: Identify users whose average points have increased over time.
-- **Expected Output**: A list of users where their latest average score is higher than their earlier average.
 
 ## Key SQL Concepts Covered
 
@@ -48,7 +45,6 @@ Here are the SQL problems that you will solve as part of this project:
 - **Conditional Aggregation**: Using `CASE WHEN` to handle positive and negative submissions.
 - **Ranking**: Using `DENSE_RANK()` to rank users based on their performance.
 - **Group By**: Aggregating results by groups (e.g., by user, by day, by week).
-- **Joins**: Using `INNER JOIN` in Q6 to compare user performance over time.
 
 ## SQL Queries Solutions
 
@@ -123,21 +119,5 @@ WITH weekly_performance AS (
     GROUP BY week_no, username
 )
 SELECT * FROM weekly_performance WHERE rank2 <= 10;
-```
-
-### Q6: Find Users Who Improved Their Performance Over Time
-```sql
-WITH score_trend AS (
-    SELECT
-        username,
-        EXTRACT(MONTH FROM submitted_at) AS month,
-        AVG(points) AS avg_points
-    FROM data
-    GROUP BY username, month
-)
-SELECT DISTINCT s1.username
-FROM score_trend s1
-JOIN score_trend s2 ON s1.username = s2.username AND s1.month < s2.month
-WHERE s2.avg_points > s1.avg_points;
 ```
 
