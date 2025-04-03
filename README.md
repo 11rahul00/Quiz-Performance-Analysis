@@ -37,13 +37,18 @@ Here are the SQL problems that you will solve as part of this project:
 - **Description**: Identify the top 10 users with the highest total points earned each week.
 - **Expected Output**: A report showing the top 10 users ranked by total points per week.
 
+### Q6. Find Users Who Improved Their Performance Over Time
+- **Description**: Identify users whose average points have increased over time.
+- **Expected Output**: A list of users where their latest average score is higher than their earlier average.
+
 ## Key SQL Concepts Covered
 
-- **Aggregation**: Using `COUNT`, `SUM`, `AVG` to aggregate data.
+- **Aggregation**: Using `COUNT()`, `SUM()`, and `AVG()` to aggregate data.
 - **Date Functions**: Using `EXTRACT()` and `TO_CHAR()` for manipulating dates.
 - **Conditional Aggregation**: Using `CASE WHEN` to handle positive and negative submissions.
 - **Ranking**: Using `DENSE_RANK()` to rank users based on their performance.
 - **Group By**: Aggregating results by groups (e.g., by user, by day, by week).
+- **Joins**: Using `INNER JOIN` in Q6 to compare user performance over time.
 
 ## SQL Queries Solutions
 
@@ -51,7 +56,7 @@ Below are the solutions for each question in this project:
 
 ### Q1: List All Distinct Users and Their Stats
 ```sql
-SELECT 
+SELECT
     username,
     COUNT(id) AS total_submissions,
     SUM(points) AS points_earned
@@ -62,7 +67,7 @@ ORDER BY total_submissions DESC;
 
 ### Q2: Calculate the Daily Average Points for Each User
 ```sql
-SELECT 
+SELECT
     TO_CHAR(submitted_at, 'DD-MM') AS day,
     username,
     AVG(points) AS daily_avg_points
@@ -74,7 +79,7 @@ ORDER BY username;
 ### Q3: Find the Top 3 Users with the Most Correct Submissions for Each Day
 ```sql
 WITH daily_submissions AS (
-    SELECT 
+    SELECT
         TO_CHAR(submitted_at, 'DD-MM') AS daily,
         username,
         SUM(CASE WHEN points > 0 THEN 1 ELSE 0 END) AS correct_submissions
@@ -82,14 +87,14 @@ WITH daily_submissions AS (
     GROUP BY 1, 2
 ),
 users_rank AS (
-    SELECT 
+    SELECT
         daily,
         username,
         correct_submissions,
         DENSE_RANK() OVER(PARTITION BY daily ORDER BY correct_submissions DESC) AS rank
     FROM daily_submissions
 )
-SELECT 
+SELECT
     daily,
     username,
     correct_submissions
@@ -99,7 +104,7 @@ WHERE rank <= 3;
 
 ### Q4: Find the Top 5 Users with the Highest Number of Incorrect Submissions
 ```sql
-SELECT 
+SELECT
     username,
     SUM(CASE WHEN points < 0 THEN 1 ELSE 0 END) AS incorrect_submissions,
     SUM(CASE WHEN points > 0 THEN 1 ELSE 0 END) AS correct_submissions,
@@ -115,7 +120,7 @@ ORDER BY incorrect_submissions DESC;
 ```sql
 SELECT *  
 FROM (
-    SELECT 
+    SELECT
         EXTRACT(WEEK FROM submitted_at) AS week_no,
         username,
         SUM(points) AS total_points_earned,
@@ -126,4 +131,21 @@ FROM (
 )
 WHERE rank <= 10;
 ```
+
+### Q6: Find Users Who Improved Their Performance Over Time
+```sql
+WITH score_trend AS (
+    SELECT
+        username,
+        EXTRACT(MONTH FROM submitted_at) AS month,
+        AVG(points) AS avg_points
+    FROM user_submissions
+    GROUP BY username, month
+)
+SELECT DISTINCT s1.username
+FROM score_trend s1
+JOIN score_trend s2 ON s1.username = s2.username AND s1.month < s2.month
+WHERE s2.avg_points > s1.avg_points;
+```
+
 
