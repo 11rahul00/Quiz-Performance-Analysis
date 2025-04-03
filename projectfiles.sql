@@ -1,3 +1,14 @@
+CREATE DATABASE quiz;
+USE quiz;
+
+CREATE TABLE data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    question_id INT,
+    points INT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    username VARCHAR(50)
+);
 
 -- Q.1 List all distinct users and their stats (return user_name, total_submissions, points earned)
 SELECT 
