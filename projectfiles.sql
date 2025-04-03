@@ -78,19 +78,6 @@ WITH weekly_performance AS (
 )
 SELECT * FROM weekly_performance WHERE rank2 <= 10;
 
---Q.6 Find Users Who Improved Their Performance Over Time 
-WITH score_trend AS (
-    SELECT 
-        username,
-        EXTRACT(MONTH FROM submitted_at) AS month,
-        AVG(points) AS avg_points
-    FROM data
-    GROUP BY username, month
-)
-SELECT DISTINCT s1.username
-FROM score_trend s1
-JOIN score_trend s2 ON s1.username = s2.username AND s1.month < s2.month
-WHERE s2.avg_points > s1.avg_points;
 
 
 
